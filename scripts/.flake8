@@ -16,12 +16,16 @@ ignore =
   D102,
 # Missing docstring in public function
   D103,
+# Missing docstring in magic method
+  D105,
 # First line should end with a period
   D400,
 # Missing parameter(s) in Docstring
   DAR101,
 # Missing "Returns" in Docstring
   DAR201,
+# Use of assert detected
+  S101,
 # Consider possible security implications associated with the subprocess module
   S404,
 # Subprocess call - check for execution of untrusted input
@@ -32,8 +36,16 @@ ignore =
   D104,
 # Isort found an import in the wrong position
   I101,
+# Additional newline in a group of imports
+  I202,
+# Isort found an unexpected blank line in imports
+  I004,
 # Isort found an unexpected missing import
   I005,
+# Isort found an import in the wrong position
+  I001,
+# Missing docstring in __init__
+  D107,
 
 exclude = .git, */data, env/, venv/
 

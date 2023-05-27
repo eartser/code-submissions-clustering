@@ -6,15 +6,21 @@ import org.jetbrains.kotlinx.dataframe.api.dataFrameOf
 import org.jetbrains.research.code.submissions.clustering.load.clustering.submissions.SubmissionsGraphHAC
 import org.jetbrains.research.code.submissions.clustering.util.*
 import org.jgrapht.Graph
-import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.MethodSource
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 
+@RunWith(Parameterized::class)
 class SerializationTest : ParametrizedBaseWithUnifierTest(getTmpProjectDir()) {
-    @ParameterizedTest
-    @MethodSource("getTestData")
-    fun testSerializeGraph(dataFrame: DataFrame<*>) {
+    @JvmField
+    @Parameterized.Parameter(0)
+    var dataFrame: DataFrame<*>? = null
+
+    @Test
+    fun testSerializeGraph() {
         WriteCommandAction.runWriteCommandAction(mockProject) {
-            val graph = dataFrame.loadGraph(mockContext)
+            mockContext.unifier.clearFactory()
+            val graph = dataFrame!!.loadGraph(mockContext)
             val bytes = graph.toProto().toByteArray()
             val deserializedGraph = ProtoSubmissionsGraph.parseFrom(bytes).toGraph()
             assertEquals(
@@ -24,11 +30,11 @@ class SerializationTest : ParametrizedBaseWithUnifierTest(getTmpProjectDir()) {
         }
     }
 
-    @ParameterizedTest
-    @MethodSource("getTestData")
-    fun testSerializeClusteredGraph(dataFrame: DataFrame<*>) {
+    @Test
+    fun testSerializeClusteredGraph() {
         WriteCommandAction.runWriteCommandAction(mockProject) {
-            val graph = dataFrame.loadGraph(mockContext)
+            mockContext.unifier.clearFactory()
+            val graph = dataFrame!!.loadGraph(mockContext)
             val clusterer = SubmissionsGraphHAC(DIST_LIMIT)
             graph.cluster(clusterer)
             val clusteredGraph = graph.getClusteredGraph()
@@ -57,20 +63,27 @@ class SerializationTest : ParametrizedBaseWithUnifierTest(getTmpProjectDir()) {
 
         @Suppress("WRONG_NEWLINES", "TOO_LONG_FUNCTION")
         @JvmStatic
-        fun getTestData(): List<DataFrame<*>> = listOf(
-            dataFrameOf("id", "step_id", "code")(emptySequence()),
-            dataFrameOf("id", "step_id", "code")(
-                1, 1000, "print(1)",
+        @Parameterized.Parameters(name = "{index}: ({0})")
+        fun getTestData() = listOf(
+            arrayOf(dataFrameOf("id", "step_id", "code", "quality")(emptySequence())),
+            arrayOf(
+                dataFrameOf("id", "step_id", "code", "quality")(
+                    1, 1000, "print(1)", 1,
+                )
             ),
-            dataFrameOf("id", "step_id", "code")(
-                1, 1000, "y = 1\n",
-                2, 1000, "var = 1\n",
-                3, 1000, "a=1\n",
+            arrayOf(
+                dataFrameOf("id", "step_id", "code", "quality")(
+                    1, 1000, "y = 1\n", 1,
+                    2, 1000, "var = 1\n", 1,
+                    3, 1000, "a=1\n", 1,
+                )
             ),
-            dataFrameOf("id", "step_id", "code")(
-                1, 1000, "y =         1\n",
-                2, 1000, "var       = 1\n",
-                3, 1000, "a=1\n",
+            arrayOf(
+                dataFrameOf("id", "step_id", "code", "quality")(
+                    1, 1000, "y =         1\n", 1,
+                    2, 1000, "var       = 1\n", 1,
+                    3, 1000, "a=1\n", 1,
+                )
             ),
         )
     }

@@ -6,7 +6,7 @@ detekt = "1.20.0"
 diktat = "1.1.0"
 buildconfig = "3.0.3"
 dokka = "1.7.0"
-intellij = "1.5.2"
+intellij = "1.10.0"
 xenomachina = "2.0.7"
 kotlinx = "0.8.0"
 junit-jupiter = "5.8.2"
@@ -16,6 +16,9 @@ protobuf-plugin = "0.8.19"
 protobuf-runtime = "3.21.4"
 gumtreediff = "3.0.0"
 zip4j = "2.11.1"
+fastutil = "8.5.11"
+guava = "31.1-jre"
+plugin-utilities = "1.0"
 
 [libraries]
 detekt-gradle-plugin = { module = "io.gitlab.arturbosch.detekt:detekt-gradle-plugin", version.ref = "detekt" }
@@ -33,6 +36,12 @@ protobuf-runtime = { module = "com.google.protobuf:protobuf-java", version.ref =
 gumtreediff-core = { module = "com.github.gumtreediff:core", version.ref = "gumtreediff" }
 gumtreediff-gen-python = { module = "com.github.gumtreediff:gen.python", version.ref = "gumtreediff" }
 zip4j = { module = "net.lingala.zip4j:zip4j", version.ref = "zip4j" }
+fastutil = { module = "it.unimi.dsi:fastutil-core", version.ref = "fastutil" }
+guava = { module = "com.google.guava:guava", version.ref = "guava" }
+
+plugin-utilities-core = { module = "org.jetbrains.research:plugin-utilities-core", version.ref = "plugin-utilities" }
+plugin-utilities-test = { module = "org.jetbrains.research:plugin-utilities-test", version.ref = "plugin-utilities" }
+plugin-utilities-python = { module = "org.jetbrains.research:plugin-utilities-python", version.ref = "plugin-utilities" }
 
 [plugins]
 buildconfig = { id = "com.github.gmazzo.buildconfig", version.ref = "buildconfig" }

@@ -2,21 +2,36 @@ package org.jetbrains.research.code.submissions.clustering.cli
 
 import com.intellij.openapi.application.ApplicationStarter
 import com.xenomachina.argparser.ArgParser
+import org.jetbrains.research.code.submissions.clustering.cli.models.AbstractGraphBuilderArgs
+import org.jetbrains.research.code.submissions.clustering.cli.models.Writer
 import org.jetbrains.research.code.submissions.clustering.load.context.builder.gumtree.GumTreeGraphContextBuilder
 import org.jetbrains.research.code.submissions.clustering.model.Language
 import org.jetbrains.research.code.submissions.clustering.model.SubmissionsGraph
 import org.jetbrains.research.code.submissions.clustering.util.*
+import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.logging.Logger
+import kotlin.system.exitProcess
 
 abstract class AbstractGraphBuilder : ApplicationStarter {
     protected val logger: Logger = Logger.getLogger(javaClass.name)
-    private var graphToBinary: Boolean = false
+    private var toBinary: Boolean = false
     private var toCSV: Boolean = false
     private var toPNG: Boolean = false
     private var clustersToTxt = false
-    private lateinit var language: Language
+    private var clusteringRes = false
+    protected var binInput: Path? = null
+    private lateinit var lang: Language
     private lateinit var outputPath: String
+
+    private fun getWriters() = listOf(
+        Writer(SubmissionsGraph::writeToTxt, true),
+        Writer(SubmissionsGraph::writeToBinary, toBinary),
+        Writer(SubmissionsGraph::writeToCsv, toCSV),
+        Writer(SubmissionsGraph::writeToPng, toPNG),
+        Writer(SubmissionsGraph::writeClustersToTxt, clustersToTxt),
+        Writer(SubmissionsGraph::writeClusteringResult, clusteringRes),
+    )
 
     protected fun <T : AbstractGraphBuilderArgs> parseArgs(
         args: MutableList<String>,
@@ -24,68 +39,44 @@ abstract class AbstractGraphBuilder : ApplicationStarter {
     ): T {
         val parser = ArgParser(args.drop(1).toTypedArray())
         return parser.parseInto(argsClassConstructor).apply {
-            language = Language.valueOf(Paths.get(lang).toString())
-            outputPath = Paths.get(output).toString()
-            graphToBinary = serializeGraph
+            lang = Language.valueOf(Paths.get(language).toString())
+            outputPath = Paths.get(outputDir).toString()
+            binInput = binaryInput?.let { Paths.get(it) }
+            toBinary = serializeGraph
             toCSV = saveCSV
             toPNG = visualize
             clustersToTxt = saveClusters
+            clusteringRes = clusteringResult
         }
     }
 
-    protected fun buildGraphContext() = GumTreeGraphContextBuilder.getContext(language)
+    protected fun buildGraphContext() = GumTreeGraphContextBuilder()
+        .setLanguage(lang)
+        .buildContext()
 
     protected fun SubmissionsGraph.writeOutputData() {
         createFolder(outputPath)
-        tryToWrite(::writeToString)
-        if (graphToBinary) {
-            tryToWrite(::writeToBinary)
-            tryToWrite(getClusteredGraph()::writeToBinary)
-        }
-        if (toCSV) {
-            tryToWrite(::writeToCsv)
-        }
-        if (toPNG) {
-            tryToWrite(::writeToPng)
-        }
-        if (clustersToTxt) {
-            tryToWrite(::writeClusters)
+        getWriters().filter { it.toWrite }.forEach { tryToWrite(it.writer) }
+    }
+
+    @Suppress("TooGenericExceptionCaught")
+    protected fun startRunner(args: MutableList<String>, run: (MutableList<String>) -> Unit) {
+        try {
+            run(args)
+        } catch (ex: Throwable) {
+            logger.severe { ex.stackTraceToString() }
+            exitProcess(1)
+        } finally {
+            exitProcess(0)
         }
     }
 
     @Suppress("TooGenericExceptionCaught")
-    private fun tryToWrite(write: (String) -> Unit) {
+    private fun SubmissionsGraph.tryToWrite(write: SubmissionsGraph.(String) -> Unit) {
         try {
             write(outputPath)
         } catch (ex: Throwable) {
             logger.severe { "Writing failed: $ex" }
         }
     }
-}
-
-open class AbstractGraphBuilderArgs(parser: ArgParser) {
-    val lang by parser.storing(
-        "-l", "--language",
-        help = "Programming language of code submissions"
-    )
-    val output by parser.storing(
-        "-o", "--output_path",
-        help = "Directory to store all output files",
-    )
-    val serializeGraph by parser.flagging(
-        "--serialize",
-        help = "Save submissions graph to binary file"
-    )
-    val saveCSV by parser.flagging(
-        "--saveCSV",
-        help = "Save unified solutions to .csv file"
-    )
-    val visualize by parser.flagging(
-        "--visualize",
-        help = "Save submissions graph visualization to .png file"
-    )
-    val saveClusters by parser.flagging(
-        "--saveClusters",
-        help = "Save submissions graph clusters to .txt file"
-    )
 }

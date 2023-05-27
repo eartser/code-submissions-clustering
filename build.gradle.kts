@@ -14,9 +14,6 @@ plugins {
     alias(libs.plugins.dokka)
 }
 
-val utilitiesProjectName = "org.jetbrains.research.pluginUtilities"
-val protobufRuntime = libs.protobuf.runtime
-
 allprojects {
     apply {
         apply {
@@ -36,36 +33,25 @@ allprojects {
 
     repositories {
         mavenCentral()
+        maven("https://packages.jetbrains.team/maven/p/big-code/bigcode")
     }
 
     dependencies {
         implementation(kotlin("stdlib-jdk8"))
-        implementation(protobufRuntime)
+        implementation(rootProject.libs.protobuf.runtime)
 
-        testImplementation("$utilitiesProjectName:plugin-utilities-core") {
-            version {
-                branch = "main"
-            }
-        }
-        testImplementation("$utilitiesProjectName:plugin-utilities-python") {
-            version {
-                branch = "main"
-            }
-        }
-        testImplementation("$utilitiesProjectName:plugin-utilities-test") {
-            version {
-                branch = "main"
-            }
-        }
+        implementation(rootProject.libs.plugin.utilities.core)
+        implementation(rootProject.libs.plugin.utilities.test)
+        implementation(rootProject.libs.plugin.utilities.python)
     }
 
     tasks {
         withType<JavaCompile> {
-            sourceCompatibility = "11"
-            targetCompatibility = "11"
+            sourceCompatibility = "17"
+            targetCompatibility = "17"
         }
         withType<KotlinCompile> {
-            kotlinOptions.jvmTarget = "11"
+            kotlinOptions.jvmTarget = "17"
         }
         // According to this topic:
         // https://intellij-support.jetbrains.com/hc/en-us/community/posts/360010164960-Build-Intellij-plugin-in-IDEA-2019-1-2020-3?page=1#community_comment_360002517940

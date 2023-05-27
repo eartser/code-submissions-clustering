@@ -1,14 +1,13 @@
 package org.jetbrains.research.code.submissions.clustering.load.clustering.hac
 
 import org.jetbrains.research.code.submissions.clustering.load.clustering.*
-import org.jetbrains.research.code.submissions.clustering.util.parallel.ParallelContext
 import org.jetbrains.research.code.submissions.clustering.load.context.builder.IdentifierFactoryImpl
+import org.jetbrains.research.code.submissions.clustering.util.parallel.ParallelContext
 import org.jetbrains.research.code.submissions.clustering.util.parallel.ParallelUtils.combineWith
 import org.jgrapht.Graph
 import java.util.*
 import java.util.function.Consumer
 import java.util.logging.Logger
-import kotlin.collections.HashMap
 import kotlin.collections.set
 
 /**
@@ -109,7 +108,7 @@ class GraphHierarchicalAgglomerativeClustering<V, E>(
     }
 
     private fun mergeCommunities(first: Cluster<V>, second: Cluster<V>) {
-        val merged: MutableList<V> = first.entities.combineWith(second.entities)
+        val merged: MutableList<V> = first.entities.toMutableList().combineWith(second.entities.toMutableList())
         val newCluster = Cluster(identifierFactory.uniqueIdentifier(), merged)
         clusters.removeAll(setOf(first, second))
         for (cluster in clusters) {
@@ -172,8 +171,13 @@ class GraphHierarchicalAgglomerativeClustering<V, E>(
             if (distance != other.distance) {
                 return distance.compareTo(other.distance)
             }
-            return maxOf(weightProvider.getSize(first), weightProvider.getSize(second)) -
-                maxOf(weightProvider.getSize(other.first), weightProvider.getSize(other.second))
+            val firstSize = maxOf(weightProvider.getSize(first), weightProvider.getSize(second))
+            val secondSize = maxOf(weightProvider.getSize(other.first), weightProvider.getSize(other.second))
+            return if (firstSize != secondSize) {
+                firstSize - secondSize
+            } else {
+                getTripleId(first, second).compareTo(getTripleId(other.first, other.second))
+            }
         }
 
         override fun toString() =
